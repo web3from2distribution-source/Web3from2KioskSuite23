@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web 2.5 Kiosk</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* General body styling to match the image's primary colors */
+        body {
+            font-family: 'Courier New', monospace; /* A classic retro font style */
+            background-color: #1A1E26; /* Dark slate background */
+            color: #F5EEDF; /* Off-white text to match the board */
+            background-image: repeating-linear-gradient(0deg, #1A1E26, #1A1E26 1px, #20242C 1px, #20242C 2px); /* Subtle scanline effect */
+        }
+        /* Main container styling */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            border: 4px solid #000000; /* Thick border like the gameboard */
+            box-shadow: 8px 8px 0px #000;
+            background-color: #84A28B; /* Main board color */
+        }
+        /* Special styling for the start page panel */
+        #start-page .container {
+            background-color: #496A6F; /* Darker teal/blue color */
+        }
+        /* Kiosk menu item card styling */
+        .menu-item-card {
+            background-color: #F5EEDF; /* Beige background for cards */
+            border: 2px solid #000;
+            box-shadow: 4px 4px 0px #000;
+            color: #1A1E26;
+            transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
+        }
+        .menu-item-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 6px 6px 0px #000;
+        }
+        .menu-item-card img {
+            border-bottom: 2px solid #000;
+        }
+        /* Modal and modal content styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(26, 30, 38, 0.9);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: #496A6F;
+            border: 2px solid #000;
+            box-shadow: 6px 6px 0px #000;
+            padding: 2.5rem;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+        .close-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.75rem;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #DE4940;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .close-button:hover {
+            color: #FF5C5C;
+        }
+        /* Button styling */
+        .action-button {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            text-shadow: 2px 2px #000000;
+            border: 2px solid #000000;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .action-button:active {
+            transform: translateY(2px);
+            box-shadow: 0 0 0 #000, inset 2px 2px #000;
+        }
+        .btn-blue {
+            background-color: #496A6F; /* Teal/blue from image */
+            box-shadow: 2px 2px 0px #000;
+            color: #F5EEDF;
+        }
+        .btn-blue:hover {
+            background-color: #3A5B60;
+            box-shadow: 4px 4px 0px #000;
+        }
+        .btn-green {
+            background-color: #84A28B; /* Green from image */
+            box-shadow: 2px 2px 0px #000;
+            color: #1A1E26;
+        }
+        .btn-green:hover {
+            background-color: #74927A;
+            box-shadow: 4px 4px 0px #000;
+        }
+        .btn-red {
+            background-color: #DE4940; /* Red from image */
+            box-shadow: 2px 2px 0px #000;
+            color: #F5EEDF;
+        }
+        .btn-red:hover {
+            background-color: #BF3B33;
+            box-shadow: 4px 4px 0px #000;
+        }
+        .btn-purple {
+            background-color: #9c27b0;
+            box-shadow: 2px 2px 0px #000;
+            color: #F5EEDF;
+        }
+        .btn-purple:hover {
+            background-color: #8c20a0;
+            box-shadow: 4px 4px 0px #000;
+        }
+        .btn-orange {
+            background-color: #ff9800;
+            box-shadow: 2px 2px 0px #000;
+            color: #F5EEDF;
+        }
+        .btn-orange:hover {
+            background-color: #e68a00;
+            box-shadow: 4px 4px 0px #000;
+        }
+        .btn-gray {
+            background-color: #718096;
+            box-shadow: 2px 2px 0px #000;
+            color: #F5EEDF;
+        }
+        .btn-gray:hover {
+            background-color: #617081;
+            box-shadow: 4px 4px 0px #000;
+        }
+        /* Back button styling */
+        .back-btn {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            background-color: #496A6F;
+            color: #F5EEDF;
+            border: 2px solid #000;
+            box-shadow: 2px 2px 0px #000;
+            font-weight: bold;
+            transition: background-color 0.2s ease-in-out;
+            z-index: 10;
+        }
+        .back-btn:hover {
+            background-color: #3A5B60;
+        }
+        /* Admin dashboard column styling */
+        .admin-column {
+            background-color: #496A6F;
+            border: 2px solid #000;
+            box-shadow: inset 4px 4px 0px #222;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .admin-column h3 {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #FFE84C; /* Yellow from image */
+            border-bottom: 2px solid #000;
+            padding-bottom: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        /* Admin order card styling */
+        .admin-order-card {
+            background-color: #F5EEDF;
+            border: 2px solid #000;
+            padding: 1rem;
+            box-shadow: 2px 2px 0px #000;
+            color: #1A1E26;
+        }
+        .admin-order-card .order-items-list {
+            list-style: none;
+            padding-left: 0;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: #1A1E26;
+        }
+        .admin-order-card .order-items-list li {
+            margin-bottom: 0.25rem;
+        }
+        /* Admin button styling for statuses */
+        .admin-order-card .status-buttons button {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.75rem;
+            border: 2px solid #000;
+            font-weight: bold;
+            transition: background-color 0.2s;
+            text-shadow: none;
+            box-shadow: 2px 2px 0px #000;
+            color: #1A1E26;
+        }
+        .admin-order-card .status-buttons button:hover {
+            box-shadow: 4px 4px 0px #000;
+        }
+        .admin-order-card .status-buttons button:active {
+            transform: translateY(2px);
+            box-shadow: 0 0 0 #000, inset 2px 2px #000;
+        }
+
+        .admin-order-card .status-buttons .btn-in-progress {
+            background-color: #FFE84C; /* Yellow */
+        }
+        .admin-order-card .status-buttons .btn-in-progress:hover {
+            background-color: #EDD83A;
+        }
+        .admin-order-card .status-buttons .btn-completed {
+            background-color: #84A28B; /* Green */
+        }
+        .admin-order-card .status-buttons .btn-completed:hover {
+            background-color: #74927A;
+        }
+        .admin-order-card .status-buttons .btn-revert {
+            background-color: #F5EEDF; /* Off-white */
+        }
+        .admin-order-card .status-buttons .btn-revert:hover {
+            background-color: #DDD4CC;
+        }
+        /* Input styling */
+        input[type="text"], input[type="url"], input[type="number"], input[type="password"], textarea, select {
+            background-color: #F5EEDF;
+            border: 2px solid #000;
+            box-shadow: inset 2px 2px 0px #1A1E26;
+            color: #1A1E26;
+            font-family: 'Courier New', monospace;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            box-shadow: inset 2px 2px 0px #1A1E26, 0 0 0 2px #FFE84C;
+        }
+        /* Text colors */
+        .text-yellow-400 { color: #FFE84C; text-shadow: 2px 2px #000; }
+        .text-indigo-400 { color: #496A6F; text-shadow: 2px 2px #000; }
+        .text-green-400 { color: #84A28B; text-shadow: 2px 2px #000; }
+        .text-purple-400 { color: #DE4940; text-shadow: 2px 2px #000; }
+        .text-red-400 { color: #DE4940; text-shadow: 2px 2px #000; }
+        .text-gray-300 { color: #1A1E26; }
+        .text-gray-400 { color: #496A6F; }
+        .text-gray-500 { color: #496A6F; }
+        .text-white { color: #F5EEDF; }
+        .text-black { color: #1A1E26; }
+        .provider-checkbox-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 120px;
+            overflow-y: auto;
+            border: 2px solid #000;
+            padding: 10px;
+            background-color: #E6E1D8;
+        }
+        .provider-checkbox-container label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 min-h-screen flex items-center justify-center">
+
+    <div id="app-container" class="min-h-screen w-full flex flex-col">
+
+        <div id="start-page" class="flex-1 flex flex-col items-center justify-center text-center p-4">
+            <div class="container text-center p-8 bg-gray-800 max-w-lg mx-auto">
+                <h1 id="start-page-title" class="text-5xl font-extrabold text-yellow-400 mb-8">Welcome to The Web 2.5 Kiosk!</h1>
+                <p class="text-gray-300 text-xl mb-10">Please choose your role to continue:</p>
+                <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-6 justify-center">
+                    <button id="show-kiosk-btn" class="px-8 py-4 btn-blue action-button text-lg">
+                        <i class="fas fa-utensils mr-2"></i> Customer Kiosk
+                    </button>
+                    <button id="show-admin-btn" class="px-8 py-4 btn-purple action-button text-lg">
+                        <i class="fas fa-user-shield mr-2"></i> Admin Dashboard
+                    </button>
+                    <button id="connect-metamask-btn" class="px-8 py-4 btn-orange action-button text-lg">
+                        <i class="fas fa-wallet mr-2"></i> Connect MetaMask
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="food-kiosk-page" class="flex-1 hidden relative">
+            <button id="back-to-start-kiosk-btn" class="back-btn"><i class="fas fa-arrow-left mr-2"></i> Back to Start</button>
+            <header class="py-6 shadow-lg" style="background-color: #496A6F; border-bottom: 2px solid #000; box-shadow: 0 4px 0px #000;">
+                <div class="container text-center" style="border: none; box-shadow: none; background-color: transparent;">
+                    <h1 id="kiosk-title" class="text-4xl font-extrabold text-yellow-400">My Web 2.5 Kiosk</h1>
+                    <p id="kiosk-tagline" class="text-gray-400 text-lg mt-2">Decentralized E-commerce!</p>
+                </div>
+            </header>
+            <main class="container mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <section class="lg:col-span-2">
+                    <h2 id="kiosk-menu-title" class="text-3xl font-bold text-indigo-400 mb-6 text-center lg:text-left">Our Delicious Menu</h2>
+                    
+                    <div class="p-4 rounded-xl shadow-lg mb-6" style="background-color: #496A6F; border: 2px solid #000; box-shadow: 4px 4px 0px #000;">
+                        <h3 class="text-xl font-bold text-gray-300 mb-2" style="color: #F5EEDF;">Have a Product Link?</h3>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <input type="url" id="product-link-input" placeholder="Paste a product link here..." class="flex-1 p-2">
+                            <button id="load-product-link-btn" class="px-4 py-2 btn-blue action-button">
+                                Load Product
+                            </button>
+                        </div>
+                        <p id="product-link-message" class="text-red-400 text-sm mt-2 hidden"></p>
+                    </div>
+                    
+                    <div id="menu-items-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    </div>
+                </section>
+                <aside class="lg:col-span-1 p-6 shadow-lg h-fit sticky top-8" style="background-color: #496A6F; border: 2px solid #000; box-shadow: 4px 4px 0px #000;">
+                    <h2 class="text-3xl font-bold text-green-400 mb-6 text-center">Your Order</h2>
+                    <div id="order-list" class="space-y-4 mb-6 min-h-[100px]">
+                        <p id="empty-cart-message" class="text-gray-500 text-center">Your cart is empty. Add some delicious items!</p>
+                    </div>
+                    <div class="border-t pt-4 mt-4" style="border-top: 2px solid #000;">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-xl font-bold text-black">Total:</span>
+                            <span id="order-total" class="text-3xl font-extrabold text-yellow-400">$0.00</span>
+                        </div>
+                        <button id="complete-order-btn" class="w-full py-3 btn-green action-button disabled:opacity-50 disabled:cursor-not-allowed">
+                            Complete Order
+                        </button>
+                    </div>
+                </aside>
+            </main>
+            <footer class="py-6 mt-auto text-center text-gray-400" style="background-color: #496A6F; border-top: 2px solid #000; color: #F5EEDF;">
+                <p>&copy; 2025 The Food Spot. All rights reserved.</p>
+            </footer>
+        </div>
+        
+        <div id="order-menu-page" class="hidden flex-1 flex flex-col items-center justify-center p-4">
+            <div class="container text-center p-8 max-w-lg mx-auto" style="background-color: #496A6F; border: 2px solid #000; box-shadow: 6px 6px 0px #000;">
+                <h1 class="text-4xl font-extrabold text-yellow-400 mb-4">Order Placed!</h1>
+                <p class="text-xl text-gray-300 mb-6" style="color: #F5EEDF;">Your order has been sent to procesing. Please choose a payment provider below.</p>
+                <div id="transaction-info-container" class="p-4 rounded-xl shadow-lg mb-6 flex flex-col items-center text-center" style="background-color: #F5EEDF; border: 2px solid #000; box-shadow: 4px 4px 0px #000; color: #1A1E26;">
+                    <h3 class="text-xl font-bold text-black mb-2">Transaction Number:</h3>
+                    <div class="flex items-center gap-4">
+                        <span id="transaction-number" class="text-xl font-extrabold text-blue-500"></span>
+                        <button id="copy-transaction-btn" class="px-4 py-2 btn-blue action-button text-sm" style="color: #F5EEDF;">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="payment-providers-container" class="grid grid-cols-1 gap-4 mb-6">
+                    </div>
+                <div id="payment-link-container" class="text-center mt-6 hidden">
+                    <p class="text-gray-400 mb-2" style="color: #F5EEDF;">"Pay outside the app", or "Use the button below to pay for your order":</p>
+                    <a id="payment-link" href="#" target="_blank" class="payment-link flex items-center justify-center gap-2">
+                        <i class="fas fa-external-link-alt"></i>
+                        Go to Payment
+                    </a>
+                </div>
+                <button id="start-new-order-btn" class="mt-8 px-6 py-3 btn-green action-button">
+                    Start a New Order
+                </button>
+            </div>
+        </div>
+
+
+        <div id="admin-dashboard-page" class="flex-1 hidden flex flex-col p-4">
+            <div class="container p-8 w-full mx-auto" style="background-color: #84A28B; border: 2px solid #000; box-shadow: 6px 6px 0px #000;">
+                <button id="back-to-start-admin-btn" class="back-btn mb-6"><i class="fas fa-arrow-left mr-2"></i> Back to Start</button>
+                <h1 class="text-4xl font-extrabold text-purple-400 mb-6 text-center">Admin Dashboard</h1>
+                
+                <div id="admin-login-section" class="text-center mb-8">
+                    <p class="text-gray-300 text-lg mb-4" style="color: #1A1E26;">Enter PIN to access the Admin Dashboard:</p>
+                    <input type="password" id="admin-pin-input" class="w-full max-w-xs p-3 text-center mb-4" placeholder="15-digit PIN">
+                    <button id="admin-login-submit-btn" class="px-6 py-3 btn-purple action-button">
+                        Login
+                    </button>
+                    <p id="admin-login-message" class="text-red-400 mt-4 hidden">Incorrect PIN. Please try again.</p>
+                </div>
+
+                <div id="admin-dashboard-content" class="hidden">
+
+                    <div class="p-6 shadow-lg mb-8" style="background-color: #496A6F; border: 2px solid #000; box-shadow: 4px 4px 0px #000;">
+                        <h2 class="text-3xl font-bold text-yellow-400 mb-4 text-center">Store Text Management</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="store-title-input" class="block text-sm font-medium text-gray-400 mb-1" style="color: #F5EEDF;">Store Title</label>
+                                <input type="text" id="store-title-input" class="w-full p-2" placeholder="e.g., The Food Spot">
+                            </div>
+                            <div>
+                                <label for="store-tagline-input" class="block text-sm font-medium text-gray-400 mb-1" style="color: #F5EEDF;">Tagline</label>
+                                <input type="text" id="store-tagline-input" class="w-full p-2" placeholder="e.g., Fresh, Fast, Delicious!">
+                            </div>
+                            <div>
+                                <label for="menu-title-input" class="block text-sm font-medium text-gray-400 mb-1" style="color: #F5EEDF;">Menu Title</label>
+                                <input type="text" id="menu-title-input" class="w-full p-2" placeholder="e.g., Our Delicious Menu">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="p-6 shadow-lg mb-8" style="background-color: #496A6F; border: 2px solid #000; box-shadow: 4px 4px 0px #000;">
+                        <h2 class="text-3xl font-bold text-yellow-400 mb-4 text-center">Menu Management</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="p-4" style="background-color: #F5EEDF; border: 2px solid #000; box-shadow: inset 2px 2px 0px #1A1E26; color: #1A1E26;">
+                                <h3 id="item-form-title" class="text-xl font-bold mb-3 text-center border-b pb-2" style="color: #1A1E26; border-bottom: 2px solid #000;">Add New Menu Item</h3>
+                                <div class="space-y-4">
+                                    <input type="text" id="item-id" class="hidden">
+                                    <input type="text" id="item-name" placeholder="Item Name" class="w-full p-2" required>
+                                    <input type="number" id="item-price" placeholder="Price (e.g., 9.99)" step="0.01" min="0" class="w-full p-2" required>
+                                    <textarea id="item-description" placeholder="Description" rows="3" class="w-full p-2" required></textarea>
+                                    
+                                    <div class="space-y-2">
+                                        <label for="item-providers" class="block text-sm font-medium text-gray-400 mb-1" style="color: #1A1E26;">Select Payment Providers</label>
+                                        <div id="item-providers-container" class="provider-checkbox-container">
+                                        </div>
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <div>
+                                            <label for="item-image-url" class="block text-xs font-medium text-gray-400 mb-1" style="color: #1A1E26;">Enter an image URL:</label>
+                                            <input type="url" id="item-image-url" placeholder="e.g., https://placehold.co/..." class="w-full p-2">
+                                        </div>
+                                        <div id="image-preview" class="mt-4 hidden">
+                                            <img src="" class="max-w-full h-auto shadow-md mx-auto" alt="Image Preview" style="border: 2px solid #000; box-shadow: 2px 2px 0px #000;" >
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex gap-2">
+                                        <button id="save-item-btn" class="w-full py-3 btn-green action-button">
+                                            <i class="fas fa-plus mr-2"></i> Add Item
+                                        </button>
+                                        <button id="cancel-edit-btn" class="w-full py-3 btn-gray action-button hidden">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                    <p id="item-form-message" class="text-center text-red-400 hidden"></p>
+                                </div>
+                            </div>
+
+                            <div class="p-4" style="background-color: #F5EEDF; border: 2px solid #000; box-shadow: inset 2px 2px 0px #1A1E26; color: #1A1E26;">
+                                <h3 class="text-xl font-bold mb-3 text-center border-b pb-2" style="color: #1A1E26; border-bottom: 2px solid #000;">Current Menu Items</h3>
+                                <div id="admin-menu-list" class="space-y-3 max-h-96 overflow-y-auto pr-2">
+                                    <p id="no-menu-items-message" class="text-gray-400 text-sm text-center" style="color: #496A6F;">No menu items added yet.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="p-6 shadow-lg mb-8" style="background-color: #496A6F; border: 2px solid #000; box-shadow: 4px 4px 0px #000;">
+                        <h2 class="text-3xl font-bold text-yellow-400 mb-4 text-center">Shareable Product Links</h2>
+                        <div id="product-link-generation-container" class="space-y-4">
+                            </div>
+                    </div>
+
+                    <div class="p-6 shadow-lg mb-8" style="background-color: #496A6F; border: 2px solid #000; box-shadow: 4px 4px 0px #000;">
+                        <h2 class="text-3xl font-bold text-yellow-400 mb-4 text-center">Payment Provider Management</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="p-4" style="background-color: #F5EEDF; border: 2px solid #000; box-shadow: inset 2px 2px 0px #1A1E26; color: #1A1E26;">
+                                <h3 class="text-xl font-bold mb-3 text-center border-b pb-2" style="color: #1A1E26; border-bottom: 2px solid #000;">Add New Provider</h3>
+                                <div class="space-y-4">
+                                    <input type="text" id="provider-name" placeholder="Provider Name (e.g., Stripe, PayPal)" class="w-full p-2" required>
+                                    <input type="url" id="provider-link" placeholder="Payment Link (e.g., https://stripe.com/...)" class="w-full p-2" required>
+                                    <div class="flex gap-2">
+                                        <button id="add-provider-btn" class="w-full py-3 btn-blue action-button">
+                                            <i class="fas fa-user-plus mr-2"></i> Add Provider
+                                        </button>
+                                    </div>
+                                    <p id="provider-form-message" class="text-center text-red-400 hidden"></p>
+                                </div>
+                            </div>
+
+                            <div class="p-4" style="background-color: #F5EEDF; border: 2px solid #000; box-shadow: inset 2px 2px 0px #1A1E26; color: #1A1E26;">
+                                <h3 class="text-xl font-bold mb-3 text-center border-b pb-2" style="color: #1A1E26; border-bottom: 2px solid #000;">Current Payment Providers</h3>
+                                <div id="providers-list" class="space-y-3 max-h-96 overflow-y-auto pr-2">
+                                    <p id="no-providers-message" class="text-gray-400 text-sm text-center" style="color: #496A6F;">No providers added yet.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="p-6 shadow-lg mb-8" style="background-color: #496A6F; border: 2px solid #000; box-shadow: 4px 4px 0px #000;">
+                        <h2 class="text-3xl font-bold text-yellow-400 mb-4 text-center">Admin PIN Management</h2>
+                        <div class="space-y-4 text-black" style="background-color: #F5EEDF; border: 2px solid #000; box-shadow: inset 2px 2px 0px #1A1E26; padding: 1.5rem;">
+                            <p class="text-sm font-medium text-center">To change the PIN, please enter your current PIN, followed by a new 15-digit PIN.</p>
+                            <div class="space-y-2">
+                                <label for="current-pin-input" class="block text-sm font-medium text-gray-400" style="color: #1A1E26;">Current PIN</label>
+                                <input type="password" id="current-pin-input" class="w-full p-2" placeholder="Current 15-digit PIN">
+                            </div>
+                            <div class="space-y-2">
+                                <label for="new-pin-input" class="block text-sm font-medium text-gray-400" style="color: #1A1E26;">New PIN</label>
+                                <input type="password" id="new-pin-input" class="w-full p-2" placeholder="New 15-digit PIN">
+                            </div>
+                            <div class="space-y-2">
+                                <label for="confirm-new-pin-input" class="block text-sm font-medium text-gray-400" style="color: #1A1E26;">Confirm New PIN</label>
+                                <input type="password" id="confirm-new-pin-input" class="w-full p-2" placeholder="Confirm New 15-digit PIN">
+                            </div>
+                            <button id="update-pin-btn" class="w-full py-3 btn-purple action-button">
+                                <i class="fas fa-lock mr-2"></i> Update PIN
+                            </button>
+                            <p id="pin-message" class="text-center text-red-400 hidden"></p>
+                        </div>
+                    </div>
+                    <div class="mt-8">
+                        <h2 class="text-3xl font-bold text-green-400 mb-4">Order Status Overview</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="admin-column">
+                                <h3>Pending Payments</h3>
+                                <div id="new-orders-list-admin" class="space-y-4 max-h-96 overflow-y-auto pr-2">
+                                    <p class="text-gray-500 text-center text-sm" id="no-new-orders">No new orders.</p>
+                                </div>
+                            </div>
+                            <div class="admin-column">
+                                <h3>Orders In Progress</h3>
+                                <div id="in-progress-orders-list-admin" class="space-y-4 max-h-96 overflow-y-auto pr-2">
+                                    <p class="text-gray-500 text-center text-sm" id="no-in-progress-orders">No orders in progress.</p>
+                                </div>
+                            </div>
+                            <div class="admin-column">
+                                <h3>Completed/Delivered Orders</h3>
+                                <div id="completed-orders-list-admin" class="space-y-4 max-h-96 overflow-y-auto pr-2">
+                                    <p class="text-gray-500 text-center text-sm" id="no-completed-orders">No completed orders.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex flex-col sm:flex-row justify-between gap-4 mt-6 border-b pb-6 mb-6" style="border-bottom: 2px solid #000;">
+                            <button id="clear-orders-btn" class="w-full sm:w-1/2 py-3 btn-red action-button">
+                                <i class="fas fa-trash-alt mr-2"></i> Clear All Orders
+                            </button>
+                            <button id="save-completed-orders-btn" class="w-full sm:w-1/2 py-3 action-button" style="background-color: #496A6F; color: #F5EEDF; box-shadow: 2px 2px 0px #000;">
+                                <i class="fas fa-save mr-2"></i> Save Completed Orders to Clipboard
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="confirmationModal" class="modal">
+            <div class="modal-content text-center">
+                <span class="close-button">&times;</span>
+                <p class="text-xl font-bold mb-4" style="color: #F5EEDF;">Are you sure you want to clear all orders?</p>
+                <div class="flex justify-center gap-4 mt-4">
+                    <button id="confirmYesBtn" class="px-6 py-2 btn-red action-button">Yes</button>
+                    <button id="confirmNoBtn" class="px-6 py-2 btn-gray action-button">No</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const showKioskBtn = document.getElementById('show-kiosk-btn');
+            const showAdminBtn = document.getElementById('show-admin-btn');
+            const startPage = document.getElementById('start-page');
+            const foodKioskPage = document.getElementById('food-kiosk-page');
+            const orderMenuPage = document.getElementById('order-menu-page');
+            const adminDashboardPage = document.getElementById('admin-dashboard-page');
+            const backToStartKioskBtn = document.getElementById('back-to-start-kiosk-btn');
+            const backToStartAdminBtn = document.getElementById('back-to-start-admin-btn');
+            const menuItemsContainer = document.getElementById('menu-items-container');
+            const orderList = document.getElementById('order-list');
+            const orderTotalSpan = document.getElementById('order-total');
+            const emptyCartMessage = document.getElementById('empty-cart-message');
+            const completeOrderBtn = document.getElementById('complete-order-btn');
+            const startNewOrderBtn = document.getElementById('start-new-order-btn');
+            const paymentProvidersContainer = document.getElementById('payment-providers-container');
+            const adminPinInput = document.getElementById('admin-pin-input');
+            const adminLoginSubmitBtn = document.getElementById('admin-login-submit-btn');
+            const adminLoginMessage = document.getElementById('admin-login-message');
+            const adminDashboardContent = document.getElementById('admin-dashboard-content');
+            const itemFormTitle = document.getElementById('item-form-title');
+            const saveItemBtn = document.getElementById('save-item-btn');
+            const cancelEditBtn = document.getElementById('cancel-edit-btn');
+            const adminMenuList = document.getElementById('admin-menu-list');
+            const noMenuItemsMessage = document.getElementById('no-menu-items-message');
+            const clearOrdersBtn = document.getElementById('clear-orders-btn');
+            const confirmationModal = document.getElementById('confirmationModal');
+            const confirmYesBtn = document.getElementById('confirmYesBtn');
+            const confirmNoBtn = document.getElementById('confirmNoBtn');
+            const newOrdersListAdmin = document.getElementById('new-orders-list-admin');
+            const inProgressOrdersListAdmin = document.getElementById('in-progress-orders-list-admin');
+            const completedOrdersListAdmin = document.getElementById('completed-orders-list-admin');
+            const saveCompletedOrdersBtn = document.getElementById('save-completed-orders-btn');
+            const copyTransactionBtn = document.getElementById('copy-transaction-btn');
+            const transactionNumberSpan = document.getElementById('transaction-number');
+            const connectMetamaskBtn = document.getElementById('connect-metamask-btn');
+
+            // Admin dashboard form inputs
+            const itemIdInput = document.getElementById('item-id');
+            const itemNameInput = document.getElementById('item-name');
+            const itemPriceInput = document.getElementById('item-price');
+            const itemDescriptionInput = document.getElementById('item-description');
+            const itemImageUrlInput = document.getElementById('item-image-url');
+            const itemProvidersContainer = document.getElementById('item-providers-container');
+            const imagePreview = document.getElementById('image-preview');
+            const itemFormMessage = document.getElementById('item-form-message');
+            const storeTitleInput = document.getElementById('store-title-input');
+            const storeTaglineInput = document.getElementById('store-tagline-input');
+            const menuTitleInput = document.getElementById('menu-title-input');
+
+            // Kiosk text elements
+            const kioskTitle = document.getElementById('kiosk-title');
+            const kioskTagline = document.getElementById('kiosk-tagline');
+            const kioskMenuTitle = document.getElementById('kiosk-menu-title');
+
+            // Product link elements
+            const productLinkInput = document.getElementById('product-link-input');
+            const loadProductLinkBtn = document.getElementById('load-product-link-btn');
+            const productLinkMessage = document.getElementById('product-link-message');
+
+            // Provider management elements
+            const providerNameInput = document.getElementById('provider-name');
+            const providerLinkInput = document.getElementById('provider-link');
+            const addProviderBtn = document.getElementById('add-provider-btn');
+            const providersList = document.getElementById('providers-list');
+            const providerFormMessage = document.getElementById('provider-form-message');
+
+            // Admin PIN management elements
+            const currentPinInput = document.getElementById('current-pin-input');
+            const newPinInput = document.getElementById('new-pin-input');
+            const confirmNewPinInput = document.getElementById('confirm-new-pin-input');
+            const updatePinBtn = document.getElementById('update-pin-btn');
+            const pinMessage = document.getElementById('pin-message');
+
+            // Data storage and state management
+            let cart = [];
+            let adminLoggedIn = false;
+            let currentProduct = null;
+            const LOCAL_STORAGE_PREFIX = 'kiosk_';
+
+            const saveToLocalStorage = (key, data) => {
+                localStorage.setItem(LOCAL_STORAGE_PREFIX + key, JSON.stringify(data));
+            };
+
+            const loadFromLocalStorage = (key) => {
+                const data = localStorage.getItem(LOCAL_STORAGE_PREFIX + key);
+                return data ? JSON.parse(data) : null;
+            };
+
+            let menuItems = loadFromLocalStorage('menuItems') || [];
+            let orders = loadFromLocalStorage('orders') || {
+                'new': [],
+                'in-progress': [],
+                'completed': []
+            };
+            let providers = loadFromLocalStorage('providers') || [];
+            let adminPin = loadFromLocalStorage('adminPin') || '123456789012345';
+            let kioskText = loadFromLocalStorage('kioskText') || {
+                title: "My Web 2.5 Kiosk",
+                tagline: "Decentralized E-commerce!",
+                menuTitle: "Our Delicious Menu"
+            };
+
+            const updateKioskText = () => {
+                kioskTitle.textContent = kioskText.title;
+                kioskTagline.textContent = kioskText.tagline;
+                kioskMenuTitle.textContent = kioskText.menuTitle;
+                document.getElementById('start-page-title').textContent = kioskText.title;
+            };
+
+            const saveKioskText = () => {
+                kioskText = {
+                    title: storeTitleInput.value || kioskText.title,
+                    tagline: storeTaglineInput.value || kioskText.tagline,
+                    menuTitle: menuTitleInput.value || kioskText.menuTitle
+                };
+                saveToLocalStorage('kioskText', kioskText);
+                updateKioskText();
+            };
+
+            storeTitleInput.addEventListener('change', saveKioskText);
+            storeTaglineInput.addEventListener('change', saveKioskText);
+            menuTitleInput.addEventListener('change', saveKioskText);
+
+            const generateUniqueId = () => {
+                return Date.now().toString(36) + Math.random().toString(36).substr(2);
+            };
+
+            const renderMenuItems = () => {
+                menuItemsContainer.innerHTML = '';
+                if (menuItems.length === 0) {
+                    menuItemsContainer.innerHTML = `<p class="text-center text-gray-500">No items available. Please check back later!</p>`;
+                } else {
+                    menuItems.forEach(item => {
+                        const itemCard = document.createElement('div');
+                        itemCard.className = 'menu-item-card rounded-lg shadow-md overflow-hidden p-4';
+                        itemCard.innerHTML = `
+                            <img src="${item.imageUrl}" alt="${item.name}" class="w-full h-48 object-cover mb-4">
+                            <h3 class="text-xl font-bold mb-1">${item.name}</h3>
+                            <p class="text-gray-700 text-sm mb-2">${item.description}</p>
+                            <div class="flex justify-between items-center mt-4">
+                                <span class="text-2xl font-bold text-green-600">$${item.price.toFixed(2)}</span>
+                                <button data-id="${item.id}" class="add-to-cart-btn px-4 py-2 btn-green action-button text-sm">
+                                    <i class="fas fa-plus-circle mr-2"></i>Add
+                                </button>
+                            </div>
+                        `;
+                        menuItemsContainer.appendChild(itemCard);
+                    });
+                }
+            };
+
+            const renderAdminMenuItems = () => {
+                adminMenuList.innerHTML = '';
+                if (menuItems.length === 0) {
+                    noMenuItemsMessage.style.display = 'block';
+                } else {
+                    noMenuItemsMessage.style.display = 'none';
+                    menuItems.forEach(item => {
+                        const itemCard = document.createElement('div');
+                        itemCard.className = 'admin-menu-item p-3 border rounded-md shadow-sm flex justify-between items-center gap-4'
+                        itemCard.style.backgroundColor = '#E6E1D8';
+                        itemCard.style.color = '#1A1E26';
+                        itemCard.style.border = '2px solid #000';
+                        itemCard.style.boxShadow = '2px 2px 0px #000';
+                        itemCard.innerHTML = `
+                            <div>
+                                <h4 class="font-bold">${item.name} ($${item.price.toFixed(2)})</h4>
+                            </div>
+                            <div class="flex-shrink-0 flex gap-2">
+                                <button data-id="${item.id}" class="generate-link-btn btn-blue action-button px-3 py-1 text-xs">
+                                    <i class="fas fa-link"></i>
+                                </button>
+                                <button data-id="${item.id}" class="edit-item-btn btn-orange action-button px-3 py-1 text-xs">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button data-id="${item.id}" class="delete-item-btn btn-red action-button px-3 py-1 text-xs">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        `;
+                        adminMenuList.appendChild(itemCard);
+                    });
+                }
+                const linkGenerationContainer = document.getElementById('product-link-generation-container');
+                linkGenerationContainer.innerHTML = '';
+                menuItems.forEach(item => {
+                    const productData = {
+                        id: item.id,
+                        name: item.name,
+                        price: item.price,
+                        description: item.description,
+                        imageUrl: item.imageUrl,
+                        providers: item.providers || []
+                    };
+                    const encodedData = btoa(JSON.stringify(productData));
+                    const link = `${window.location.origin}${window.location.pathname}?product=${encodedData}`;
+
+                    const linkDiv = document.createElement('div');
+                    linkDiv.className = 'flex flex-col sm:flex-row items-center gap-2 p-3 rounded-md shadow-sm'
+                    linkDiv.style.backgroundColor = '#E6E1D8';
+                    linkDiv.style.border = '2px solid #000';
+                    linkDiv.style.boxShadow = '2px 2px 0px #000';
+                    linkDiv.innerHTML = `
+                        <span class="text-sm font-bold text-gray-700">${item.name}:</span>
+                        <input type="text" value="${link}" readonly class="flex-1 p-2 text-sm bg-white" style="border: 1px solid #ccc;"/>
+                        <button class="copy-link-btn btn-green action-button px-4 py-2 text-sm">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    `;
+                    linkGenerationContainer.appendChild(linkDiv);
+                });
+            };
+
+            const renderCart = () => {
+                orderList.innerHTML = '';
+                if (cart.length === 0) {
+                    emptyCartMessage.style.display = 'block';
+                    completeOrderBtn.disabled = true;
+                } else {
+                    emptyCartMessage.style.display = 'none';
+                    completeOrderBtn.disabled = false;
+                    cart.forEach(item => {
+                        const itemEl = document.createElement('div');
+                        itemEl.className = 'flex justify-between items-center p-2 rounded-md';
+                        itemEl.style.backgroundColor = '#E6E1D8';
+                        itemEl.style.border = '2px solid #000';
+                        itemEl.style.boxShadow = '2px 2px 0px #000';
+                        itemEl.innerHTML = `
+                            <span class="font-bold text-gray-800">${item.name}</span>
+                            <span class="text-gray-600">x${item.quantity}</span>
+                            <span class="font-bold text-green-600">$${(item.price * item.quantity).toFixed(2)}</span>
+                        `;
+                        orderList.appendChild(itemEl);
+                    });
+                }
+                const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                orderTotalSpan.textContent = `$${total.toFixed(2)}`;
+            };
+
+            const renderOrderPaymentProviders = (providersToRender) => {
+                paymentProvidersContainer.innerHTML = '';
+                if (providersToRender && providersToRender.length > 0) {
+                    providersToRender.forEach(provider => {
+                        const providerBtn = document.createElement('button');
+                        providerBtn.className = 'w-full py-3 btn-blue action-button';
+                        providerBtn.textContent = `Pay with ${provider.name}`;
+                        providerBtn.onclick = () => {
+                            window.open(provider.link, '_blank');
+                        };
+                        paymentProvidersContainer.appendChild(providerBtn);
+                    });
+                } else {
+                    paymentProvidersContainer.innerHTML = `<p class="text-red-400 text-center text-lg">No payment providers available for this order.</p>`;
+                }
+            };
+            
+            const renderAdminProviders = () => {
+                providersList.innerHTML = '';
+                if (providers.length === 0) {
+                    document.getElementById('no-providers-message').style.display = 'block';
+                } else {
+                    document.getElementById('no-providers-message').style.display = 'none';
+                    providers.forEach(provider => {
+                        const providerEl = document.createElement('div');
+                        providerEl.className = 'flex justify-between items-center p-3 rounded-md shadow-sm gap-4';
+                        providerEl.style.backgroundColor = '#E6E1D8';
+                        providerEl.style.border = '2px solid #000';
+                        providerEl.style.boxShadow = '2px 2px 0px #000';
+                        providerEl.innerHTML = `
+                            <h4 class="font-bold text-gray-800">${provider.name}</h4>
+                            <a href="${provider.link}" target="_blank" class="text-blue-500 hover:underline text-sm truncate max-w-[150px]">${provider.link}</a>
+                            <button data-id="${provider.id}" class="delete-provider-btn btn-red action-button px-3 py-1 text-xs">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        `;
+                        providersList.appendChild(providerEl);
+                    });
+                }
+                renderItemProvidersCheckboxes();
+            };
+
+            const renderItemProvidersCheckboxes = () => {
+                itemProvidersContainer.innerHTML = '';
+                providers.forEach(provider => {
+                    const checkboxDiv = document.createElement('div');
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = `provider-${provider.id}`;
+                    checkbox.name = 'item-providers';
+                    checkbox.value = provider.id;
+                    const label = document.createElement('label');
+                    label.htmlFor = `provider-${provider.id}`;
+                    label.textContent = provider.name;
+                    checkboxDiv.appendChild(checkbox);
+                    checkboxDiv.appendChild(label);
+                    itemProvidersContainer.appendChild(checkboxDiv);
+                });
+            };
+
+            const clearItemForm = () => {
+                itemIdInput.value = '';
+                itemNameInput.value = '';
+                itemPriceInput.value = '';
+                itemDescriptionInput.value = '';
+                itemImageUrlInput.value = '';
+                imagePreview.style.display = 'none';
+                imagePreview.querySelector('img').src = '';
+                document.querySelectorAll('#item-providers-container input[type="checkbox"]').forEach(checkbox => checkbox.checked = false);
+                itemFormTitle.textContent = 'Add New Menu Item';
+                saveItemBtn.innerHTML = '<i class="fas fa-plus mr-2"></i> Add Item';
+                cancelEditBtn.classList.add('hidden');
+            };
+
+            const renderAdminOrders = () => {
+                newOrdersListAdmin.innerHTML = orders['new'].length > 0 ? '' : `<p class="text-gray-500 text-center text-sm" id="no-new-orders">No new orders.</p>`;
+                inProgressOrdersListAdmin.innerHTML = orders['in-progress'].length > 0 ? '' : `<p class="text-gray-500 text-center text-sm" id="no-in-progress-orders">No orders in progress.</p>`;
+                completedOrdersListAdmin.innerHTML = orders['completed'].length > 0 ? '' : `<p class="text-gray-500 text-center text-sm" id="no-completed-orders">No completed orders.</p>`;
+
+                ['new', 'in-progress', 'completed'].forEach(status => {
+                    orders[status].forEach(order => {
+                        const orderCard = document.createElement('div');
+                        orderCard.className = 'admin-order-card';
+                        orderCard.innerHTML = `
+                            <h4 class="font-bold text-lg mb-2">Order #${order.transactionId.substring(0, 8)}</h4>
+                            <p class="text-sm">Status: <span class="font-semibold text-blue-600">${status.replace('-', ' ')}</span></p>
+                            <p class="text-sm">Total: <span class="font-bold text-green-600">$${order.total.toFixed(2)}</span></p>
+                            <ul class="order-items-list">
+                                ${order.items.map(item => `<li>${item.name} x${item.quantity}</li>`).join('')}
+                            </ul>
+                            <div class="status-buttons mt-4 flex justify-end gap-2">
+                                ${status === 'new' ? `<button data-id="${order.transactionId}" data-status="in-progress" class="btn-in-progress">Move to In Progress</button>` : ''}
+                                ${status === 'in-progress' ? `<button data-id="${order.transactionId}" data-status="completed" class="btn-completed">Move to Completed</button>` : ''}
+                                ${status !== 'new' ? `<button data-id="${order.transactionId}" data-status="revert" class="btn-revert">Revert to New</button>` : ''}
+                                <button data-id="${order.transactionId}" data-status="delete" class="btn-red">Delete</button>
+                            </div>
+                        `;
+                        document.getElementById(`${status}-orders-list-admin`).appendChild(orderCard);
+                    });
+                });
+            };
+
+            const updateOrder = (transactionId, newStatus) => {
+                let orderToUpdate = null;
+                let oldStatus = null;
+                for (const status in orders) {
+                    const index = orders[status].findIndex(order => order.transactionId === transactionId);
+                    if (index !== -1) {
+                        orderToUpdate = orders[status].splice(index, 1)[0];
+                        oldStatus = status;
+                        break;
+                    }
+                }
+                if (orderToUpdate) {
+                    if (newStatus === 'revert') {
+                        newStatus = 'new';
+                    }
+                    if (newStatus !== 'delete') {
+                        orders[newStatus].push(orderToUpdate);
+                    }
+                    saveToLocalStorage('orders', orders);
+                    renderAdminOrders();
+                }
+            };
+
+            // Event Listeners
+            showKioskBtn.addEventListener('click', () => {
+                startPage.classList.add('hidden');
+                foodKioskPage.classList.remove('hidden');
+                renderMenuItems();
+            });
+
+            showAdminBtn.addEventListener('click', () => {
+                startPage.classList.add('hidden');
+                adminDashboardPage.classList.remove('hidden');
+            });
+
+            backToStartKioskBtn.addEventListener('click', () => {
+                foodKioskPage.classList.add('hidden');
+                startPage.classList.remove('hidden');
+                // Reset Kiosk state
+                cart = [];
+                renderCart();
+            });
+
+            backToStartAdminBtn.addEventListener('click', () => {
+                adminDashboardPage.classList.add('hidden');
+                startPage.classList.remove('hidden');
+                adminDashboardContent.classList.add('hidden');
+                adminLoginSection.classList.remove('hidden');
+                adminPinInput.value = '';
+            });
+
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('add-to-cart-btn')) {
+                    const itemId = e.target.dataset.id;
+                    const item = menuItems.find(i => i.id === itemId);
+                    if (item) {
+                        const existingItem = cart.find(cartItem => cartItem.id === itemId);
+                        if (existingItem) {
+                            existingItem.quantity++;
+                        } else {
+                            cart.push({ ...item,
+                                quantity: 1
+                            });
+                        }
+                        renderCart();
+                    }
+                }
+                if (e.target.classList.contains('delete-provider-btn')) {
+                    const providerId = e.target.dataset.id;
+                    providers = providers.filter(p => p.id !== providerId);
+                    saveToLocalStorage('providers', providers);
+                    renderAdminProviders();
+                }
+                if (e.target.classList.contains('delete-item-btn')) {
+                    const itemId = e.target.dataset.id;
+                    menuItems = menuItems.filter(i => i.id !== itemId);
+                    saveToLocalStorage('menuItems', menuItems);
+                    renderMenuItems();
+                    renderAdminMenuItems();
+                }
+                if (e.target.classList.contains('edit-item-btn')) {
+                    const itemId = e.target.dataset.id;
+                    editItem(itemId);
+                }
+                if (e.target.classList.contains('copy-link-btn')) {
+                    const linkInput = e.target.previousElementSibling;
+                    linkInput.select();
+                    navigator.clipboard.writeText(linkInput.value);
+                    alert("Product link copied to clipboard!");
+                }
+            });
+
+            completeOrderBtn.addEventListener('click', () => {
+                if (cart.length > 0) {
+                    foodKioskPage.classList.add('hidden');
+                    orderMenuPage.classList.remove('hidden');
+                    const transactionId = generateUniqueId();
+                    transactionNumberSpan.textContent = transactionId;
+                    const order = {
+                        transactionId: transactionId,
+                        items: cart,
+                        total: cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
+                        timestamp: new Date().toISOString()
+                    };
+                    orders['new'].push(order);
+                    saveToLocalStorage('orders', orders);
+                    
+                    if (currentProduct && currentProduct.providers.length > 0) {
+                        renderOrderPaymentProviders(currentProduct.providers);
+                    } else if (providers.length > 0) {
+                        renderOrderPaymentProviders(providers);
+                    } else {
+                        renderOrderPaymentProviders([]);
+                    }
+                    
+                    cart = [];
+                    renderCart();
+                }
+            });
+
+            startNewOrderBtn.addEventListener('click', () => {
+                orderMenuPage.classList.add('hidden');
+                foodKioskPage.classList.remove('hidden');
+                currentProduct = null;
+            });
+
+            // Admin login logic
+            adminLoginSubmitBtn.addEventListener('click', () => {
+                if (adminPinInput.value === adminPin) {
+                    adminLoggedIn = true;
+                    adminLoginSection.classList.add('hidden');
+                    adminDashboardContent.classList.remove('hidden');
+                    renderAdminMenuItems();
+                    renderAdminOrders();
+                    renderAdminProviders();
+                    storeTitleInput.value = kioskText.title;
+                    storeTaglineInput.value = kioskText.tagline;
+                    menuTitleInput.value = kioskText.menuTitle;
+                } else {
+                    adminLoginMessage.classList.remove('hidden');
+                    setTimeout(() => adminLoginMessage.classList.add('hidden'), 3000);
+                }
+            });
+
+            // Save/Edit Item logic
+            saveItemBtn.addEventListener('click', () => {
+                const id = itemIdInput.value;
+                const name = itemNameInput.value.trim();
+                const price = parseFloat(itemPriceInput.value);
+                const description = itemDescriptionInput.value.trim();
+                const imageUrl = itemImageUrlInput.value.trim();
+                const selectedProviderIds = Array.from(document.querySelectorAll('#item-providers-container input[type="checkbox"]:checked')).map(cb => cb.value);
+                const selectedProviders = providers.filter(p => selectedProviderIds.includes(p.id));
+
+                if (!name || isNaN(price) || price <= 0 || !description) {
+                    itemFormMessage.textContent = "Please fill out all required fields.";
+                    itemFormMessage.classList.remove('hidden');
+                    return;
+                }
+                itemFormMessage.classList.add('hidden');
+
+                if (id) {
+                    // Update existing item
+                    const itemIndex = menuItems.findIndex(i => i.id === id);
+                    if (itemIndex !== -1) {
+                        menuItems[itemIndex] = {
+                            id: id,
+                            name,
+                            price,
+                            description,
+                            imageUrl,
+                            providers: selectedProviders
+                        };
+                    }
+                } else {
+                    // Add new item
+                    const newItem = {
+                        id: generateUniqueId(),
+                        name,
+                        price,
+                        description,
+                        imageUrl,
+                        providers: selectedProviders
+                    };
+                    menuItems.push(newItem);
+                }
+                saveToLocalStorage('menuItems', menuItems);
+                renderMenuItems();
+                renderAdminMenuItems();
+                clearItemForm();
+            });
+
+            cancelEditBtn.addEventListener('click', () => {
+                clearItemForm();
+            });
+
+            const editItem = (id) => {
+                const itemToEdit = menuItems.find(item => item.id === id);
+                if (itemToEdit) {
+                    itemIdInput.value = itemToEdit.id;
+                    itemNameInput.value = itemToEdit.name;
+                    itemPriceInput.value = itemToEdit.price;
+                    itemDescriptionInput.value = itemToEdit.description;
+                    itemImageUrlInput.value = itemToEdit.imageUrl;
+                    imagePreview.querySelector('img').src = itemToEdit.imageUrl;
+                    imagePreview.style.display = 'block';
+                    document.querySelectorAll('#item-providers-container input[type="checkbox"]').forEach(checkbox => {
+                        checkbox.checked = itemToEdit.providers.some(p => p.id === checkbox.value);
+                    });
+                    itemFormTitle.textContent = 'Edit Menu Item';
+                    saveItemBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Update Item';
+                    cancelEditBtn.classList.remove('hidden');
+                }
+            };
+            
+            itemImageUrlInput.addEventListener('input', () => {
+                if (itemImageUrlInput.value) {
+                    imagePreview.querySelector('img').src = itemImageUrlInput.value;
+                    imagePreview.style.display = 'block';
+                } else {
+                    imagePreview.style.display = 'none';
+                }
+            });
+
+            // Provider management logic
+            addProviderBtn.addEventListener('click', () => {
+                const name = providerNameInput.value.trim();
+                const link = providerLinkInput.value.trim();
+                if (!name || !link) {
+                    providerFormMessage.textContent = "Please enter both a name and a link.";
+                    providerFormMessage.classList.remove('hidden');
+                    return;
+                }
+                providerFormMessage.classList.add('hidden');
+                const newProvider = {
+                    id: generateUniqueId(),
+                    name,
+                    link
+                };
+                providers.push(newProvider);
+                saveToLocalStorage('providers', providers);
+                renderAdminProviders();
+                providerNameInput.value = '';
+                providerLinkInput.value = '';
+            });
+
+            // PIN management logic
+            updatePinBtn.addEventListener('click', () => {
+                const currentPin = currentPinInput.value;
+                const newPin = newPinInput.value;
+                const confirmNewPin = confirmNewPinInput.value;
+
+                if (currentPin !== adminPin) {
+                    pinMessage.textContent = "Incorrect current PIN.";
+                    pinMessage.classList.remove('hidden');
+                    return;
+                }
+                if (newPin.length !== 15 || newPin !== confirmNewPin) {
+                    pinMessage.textContent = "New PIN must be 15 digits and match the confirmation.";
+                    pinMessage.classList.remove('hidden');
+                    return;
+                }
+                adminPin = newPin;
+                saveToLocalStorage('adminPin', adminPin);
+                pinMessage.textContent = "PIN updated successfully!";
+                pinMessage.classList.remove('hidden');
+                pinMessage.style.color = '#84A28B';
+                currentPinInput.value = '';
+                newPinInput.value = '';
+                confirmNewPinInput.value = '';
+                setTimeout(() => {
+                    pinMessage.classList.add('hidden');
+                    pinMessage.style.color = '';
+                }, 3000);
+            });
+
+            // Order status management
+            document.getElementById('admin-dashboard-content').addEventListener('click', (e) => {
+                if (e.target.dataset.status) {
+                    const transactionId = e.target.dataset.id;
+                    const newStatus = e.target.dataset.status;
+                    updateOrder(transactionId, newStatus);
+                }
+            });
+            
+            // Clear all orders
+            clearOrdersBtn.addEventListener('click', () => {
+                confirmationModal.style.display = 'flex';
+            });
+            confirmYesBtn.addEventListener('click', () => {
+                orders = {
+                    'new': [],
+                    'in-progress': [],
+                    'completed': []
+                };
+                saveToLocalStorage('orders', orders);
+                renderAdminOrders();
+                confirmationModal.style.display = 'none';
+            });
+            confirmNoBtn.addEventListener('click', () => {
+                confirmationModal.style.display = 'none';
+            });
+            document.querySelector('#confirmationModal .close-button').addEventListener('click', () => {
+                confirmationModal.style.display = 'none';
+            });
+
+            saveCompletedOrdersBtn.addEventListener('click', async () => {
+                const completedOrdersText = JSON.stringify(orders.completed, null, 2);
+                try {
+                    await navigator.clipboard.writeText(completedOrdersText);
+                    alert("Completed orders copied to clipboard!");
+                } catch (err) {
+                    console.error('Failed to copy text: ', err);
+                    alert("Failed to copy orders to clipboard. Please try again.");
+                }
+            });
+
+            copyTransactionBtn.addEventListener('click', async () => {
+                const transactionNumber = transactionNumberSpan.textContent;
+                try {
+                    await navigator.clipboard.writeText(transactionNumber);
+                    alert("Transaction number copied to clipboard!");
+                } catch (err) {
+                    console.error('Failed to copy transaction number: ', err);
+                    alert("Failed to copy transaction number. Please try again.");
+                }
+            });
+
+            // New MetaMask connection logic
+            if (typeof window.ethereum !== 'undefined') {
+                connectMetamaskBtn.addEventListener('click', async () => {
+                    try {
+                        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                        const account = accounts[0];
+                        alert(`Successfully connected to MetaMask! Account: ${account}`);
+                    } catch (error) {
+                    }
+                });
+            } else {
+                connectMetamaskBtn.classList.add('hidden');
+            }
+
+            // Function to load product from a URL
+            const loadProductFromUrl = () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const productParam = urlParams.get('product');
+                if (productParam) {
+                    try {
+                        const decodedData = JSON.parse(atob(productParam));
+                        currentProduct = decodedData;
+                        cart = [{ ...decodedData, quantity: 1 }];
+                        renderCart();
+                        startPage.classList.add('hidden');
+                        foodKioskPage.classList.remove('hidden');
+                        productLinkMessage.textContent = `Product "${currentProduct.name}" loaded successfully.`;
+                        productLinkMessage.style.color = '#84A28B'; // Green color for success
+                        productLinkMessage.classList.remove('hidden');
+                    } catch (error) {
+                        console.error("Failed to decode product link:", error);
+                        productLinkMessage.textContent = "Invalid product link.";
+                        productLinkMessage.style.color = '#DE4940'; // Red color for error
+                        productLinkMessage.classList.remove('hidden');
+                    }
+                }
+            };
+
+            // Event listener for the "Load Product" button
+            loadProductLinkBtn.addEventListener('click', () => {
+                const productLink = productLinkInput.value.trim();
+                if (productLink) {
+                    const url = new URL(productLink);
+                    const urlParams = new URLSearchParams(url.search);
+                    const productParam = urlParams.get('product');
+                    if (productParam) {
+                        try {
+                            const decodedData = JSON.parse(atob(productParam));
+                            currentProduct = decodedData;
+                            cart = [{ ...decodedData, quantity: 1 }];
+                            renderCart();
+                            productLinkMessage.textContent = `Product "${currentProduct.name}" loaded successfully.`;
+                            productLinkMessage.style.color = '#84A28B';
+                            productLinkMessage.classList.remove('hidden');
+                        } catch (error) {
+                            productLinkMessage.textContent = "Invalid product link. Please check the URL and try again.";
+                            productLinkMessage.style.color = '#DE4940';
+                            productLinkMessage.classList.remove('hidden');
+                        }
+                    } else {
+                        productLinkMessage.textContent = "The link does not contain product information.";
+                        productLinkMessage.style.color = '#DE4940';
+                        productLinkMessage.classList.remove('hidden');
+                    }
+                }
+            });
+
+            // Initial load
+            updateKioskText();
+            renderAdminProviders();
+            loadProductFromUrl();
+        });
+    </script>
+</body>
+</html>
