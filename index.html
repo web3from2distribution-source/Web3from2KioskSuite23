@@ -382,7 +382,7 @@
                 
                 <div id="admin-login-section" class="text-center mb-8">
                     <p class="text-gray-300 text-lg mb-4" style="color: #1A1E26;">Enter PIN to access the Admin Dashboard:</p>
-                    <input type="password" id="admin-pin-input" class="w-full max-w-xs p-3 text-center mb-4" placeholder="15-digit PIN">
+                    <input type="password" id="admin-pin-input" class="w-full max-w-xs p-3 text-center mb-4" placeholder="15-digit PIN" maxlength="15">
                     <button id="admin-login-submit-btn" class="px-6 py-3 btn-purple action-button">
                         Login
                     </button>
@@ -495,15 +495,15 @@
                             <p class="text-sm font-medium text-center">To change the PIN, please enter your current PIN, followed by a new 15-digit PIN.</p>
                             <div class="space-y-2">
                                 <label for="current-pin-input" class="block text-sm font-medium text-gray-400" style="color: #1A1E26;">Current PIN</label>
-                                <input type="password" id="current-pin-input" class="w-full p-2" placeholder="Current 15-digit PIN">
+                                <input type="password" id="current-pin-input" class="w-full p-2" placeholder="Current 15-digit PIN" maxlength="15">
                             </div>
                             <div class="space-y-2">
                                 <label for="new-pin-input" class="block text-sm font-medium text-gray-400" style="color: #1A1E26;">New PIN</label>
-                                <input type="password" id="new-pin-input" class="w-full p-2" placeholder="New 15-digit PIN">
+                                <input type="password" id="new-pin-input" class="w-full p-2" placeholder="New 15-digit PIN" maxlength="15">
                             </div>
                             <div class="space-y-2">
                                 <label for="confirm-new-pin-input" class="block text-sm font-medium text-gray-400" style="color: #1A1E26;">Confirm New PIN</label>
-                                <input type="password" id="confirm-new-pin-input" class="w-full p-2" placeholder="Confirm New 15-digit PIN">
+                                <input type="password" id="confirm-new-pin-input" class="w-full p-2" placeholder="Confirm New 15-digit PIN" maxlength="15">
                             </div>
                             <button id="update-pin-btn" class="w-full py-3 btn-purple action-button">
                                 <i class="fas fa-lock mr-2"></i> Update PIN
@@ -1027,6 +1027,12 @@
 
             // Admin login logic
             adminLoginSubmitBtn.addEventListener('click', () => {
+                if (adminPinInput.value.length !== 15) {
+                    adminLoginMessage.textContent = "Please enter a 15-digit PIN.";
+                    adminLoginMessage.classList.remove('hidden');
+                    setTimeout(() => adminLoginMessage.classList.add('hidden'), 3000);
+                    return;
+                }
                 if (adminPinInput.value === adminPin) {
                     adminLoggedIn = true;
                     adminLoginSection.classList.add('hidden');
@@ -1038,6 +1044,7 @@
                     storeTaglineInput.value = kioskText.tagline;
                     menuTitleInput.value = kioskText.menuTitle;
                 } else {
+                    adminLoginMessage.textContent = "Incorrect PIN. Please try again.";
                     adminLoginMessage.classList.remove('hidden');
                     setTimeout(() => adminLoginMessage.classList.add('hidden'), 3000);
                 }
@@ -1099,206 +1106,3 @@
                 const itemToEdit = menuItems.find(item => item.id === id);
                 if (itemToEdit) {
                     itemIdInput.value = itemToEdit.id;
-                    itemNameInput.value = itemToEdit.name;
-                    itemPriceInput.value = itemToEdit.price;
-                    itemDescriptionInput.value = itemToEdit.description;
-                    itemImageUrlInput.value = itemToEdit.imageUrl;
-                    imagePreview.querySelector('img').src = itemToEdit.imageUrl;
-                    imagePreview.style.display = 'block';
-                    document.querySelectorAll('#item-providers-container input[type="checkbox"]').forEach(checkbox => {
-                        checkbox.checked = itemToEdit.providers.some(p => p.id === checkbox.value);
-                    });
-                    itemFormTitle.textContent = 'Edit Menu Item';
-                    saveItemBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Update Item';
-                    cancelEditBtn.classList.remove('hidden');
-                }
-            };
-            
-            itemImageUrlInput.addEventListener('input', () => {
-                if (itemImageUrlInput.value) {
-                    imagePreview.querySelector('img').src = itemImageUrlInput.value;
-                    imagePreview.style.display = 'block';
-                } else {
-                    imagePreview.style.display = 'none';
-                }
-            });
-
-            // Provider management logic
-            addProviderBtn.addEventListener('click', () => {
-                const name = providerNameInput.value.trim();
-                const link = providerLinkInput.value.trim();
-                if (!name || !link) {
-                    providerFormMessage.textContent = "Please enter both a name and a link.";
-                    providerFormMessage.classList.remove('hidden');
-                    return;
-                }
-                providerFormMessage.classList.add('hidden');
-                const newProvider = {
-                    id: generateUniqueId(),
-                    name,
-                    link
-                };
-                providers.push(newProvider);
-                saveToLocalStorage('providers', providers);
-                renderAdminProviders();
-                providerNameInput.value = '';
-                providerLinkInput.value = '';
-            });
-
-            // PIN management logic
-            updatePinBtn.addEventListener('click', () => {
-                const currentPin = currentPinInput.value;
-                const newPin = newPinInput.value;
-                const confirmNewPin = confirmNewPinInput.value;
-
-                if (currentPin !== adminPin) {
-                    pinMessage.textContent = "Incorrect current PIN.";
-                    pinMessage.classList.remove('hidden');
-                    return;
-                }
-                if (newPin.length !== 15 || newPin !== confirmNewPin) {
-                    pinMessage.textContent = "New PIN must be 15 digits and match the confirmation.";
-                    pinMessage.classList.remove('hidden');
-                    return;
-                }
-                adminPin = newPin;
-                saveToLocalStorage('adminPin', adminPin);
-                pinMessage.textContent = "PIN updated successfully!";
-                pinMessage.classList.remove('hidden');
-                pinMessage.style.color = '#84A28B';
-                currentPinInput.value = '';
-                newPinInput.value = '';
-                confirmNewPinInput.value = '';
-                setTimeout(() => {
-                    pinMessage.classList.add('hidden');
-                    pinMessage.style.color = '';
-                }, 3000);
-            });
-
-            // Order status management
-            document.getElementById('admin-dashboard-content').addEventListener('click', (e) => {
-                if (e.target.dataset.status) {
-                    const transactionId = e.target.dataset.id;
-                    const newStatus = e.target.dataset.status;
-                    updateOrder(transactionId, newStatus);
-                }
-            });
-            
-            // Clear all orders
-            clearOrdersBtn.addEventListener('click', () => {
-                confirmationModal.style.display = 'flex';
-            });
-            confirmYesBtn.addEventListener('click', () => {
-                orders = {
-                    'new': [],
-                    'in-progress': [],
-                    'completed': []
-                };
-                saveToLocalStorage('orders', orders);
-                renderAdminOrders();
-                confirmationModal.style.display = 'none';
-            });
-            confirmNoBtn.addEventListener('click', () => {
-                confirmationModal.style.display = 'none';
-            });
-            document.querySelector('#confirmationModal .close-button').addEventListener('click', () => {
-                confirmationModal.style.display = 'none';
-            });
-
-            saveCompletedOrdersBtn.addEventListener('click', async () => {
-                const completedOrdersText = JSON.stringify(orders.completed, null, 2);
-                try {
-                    await navigator.clipboard.writeText(completedOrdersText);
-                    alert("Completed orders copied to clipboard!");
-                } catch (err) {
-                    console.error('Failed to copy text: ', err);
-                    alert("Failed to copy orders to clipboard. Please try again.");
-                }
-            });
-
-            copyTransactionBtn.addEventListener('click', async () => {
-                const transactionNumber = transactionNumberSpan.textContent;
-                try {
-                    await navigator.clipboard.writeText(transactionNumber);
-                    alert("Transaction number copied to clipboard!");
-                } catch (err) {
-                    console.error('Failed to copy transaction number: ', err);
-                    alert("Failed to copy transaction number. Please try again.");
-                }
-            });
-
-            // New MetaMask connection logic
-            if (typeof window.ethereum !== 'undefined') {
-                connectMetamaskBtn.addEventListener('click', async () => {
-                    try {
-                        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                        const account = accounts[0];
-                        alert(`Successfully connected to MetaMask! Account: ${account}`);
-                    } catch (error) {
-                    }
-                });
-            } else {
-                connectMetamaskBtn.classList.add('hidden');
-            }
-
-            // Function to load product from a URL
-            const loadProductFromUrl = () => {
-                const urlParams = new URLSearchParams(window.location.search);
-                const productParam = urlParams.get('product');
-                if (productParam) {
-                    try {
-                        const decodedData = JSON.parse(atob(productParam));
-                        currentProduct = decodedData;
-                        cart = [{ ...decodedData, quantity: 1 }];
-                        renderCart();
-                        startPage.classList.add('hidden');
-                        foodKioskPage.classList.remove('hidden');
-                        productLinkMessage.textContent = `Product "${currentProduct.name}" loaded successfully.`;
-                        productLinkMessage.style.color = '#84A28B'; // Green color for success
-                        productLinkMessage.classList.remove('hidden');
-                    } catch (error) {
-                        console.error("Failed to decode product link:", error);
-                        productLinkMessage.textContent = "Invalid product link.";
-                        productLinkMessage.style.color = '#DE4940'; // Red color for error
-                        productLinkMessage.classList.remove('hidden');
-                    }
-                }
-            };
-
-            // Event listener for the "Load Product" button
-            loadProductLinkBtn.addEventListener('click', () => {
-                const productLink = productLinkInput.value.trim();
-                if (productLink) {
-                    const url = new URL(productLink);
-                    const urlParams = new URLSearchParams(url.search);
-                    const productParam = urlParams.get('product');
-                    if (productParam) {
-                        try {
-                            const decodedData = JSON.parse(atob(productParam));
-                            currentProduct = decodedData;
-                            cart = [{ ...decodedData, quantity: 1 }];
-                            renderCart();
-                            productLinkMessage.textContent = `Product "${currentProduct.name}" loaded successfully.`;
-                            productLinkMessage.style.color = '#84A28B';
-                            productLinkMessage.classList.remove('hidden');
-                        } catch (error) {
-                            productLinkMessage.textContent = "Invalid product link. Please check the URL and try again.";
-                            productLinkMessage.style.color = '#DE4940';
-                            productLinkMessage.classList.remove('hidden');
-                        }
-                    } else {
-                        productLinkMessage.textContent = "The link does not contain product information.";
-                        productLinkMessage.style.color = '#DE4940';
-                        productLinkMessage.classList.remove('hidden');
-                    }
-                }
-            });
-
-            // Initial load
-            updateKioskText();
-            renderAdminProviders();
-            loadProductFromUrl();
-        });
-    </script>
-</body>
-</html>
