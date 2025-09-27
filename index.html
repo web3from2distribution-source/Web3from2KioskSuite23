@@ -341,6 +341,13 @@
                     </div>
                 </aside>
             </main>
+            
+            <div id="permanent-payment-providers-container" class="container mt-8 p-6 shadow-lg">
+                <h2 class="text-3xl font-bold text-yellow-400 mb-6 text-center">Permanent Payment Options</h2>
+                <div id="permanent-providers-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    </div>
+            </div>
+
             <footer class="py-6 mt-auto text-center text-gray-400" style="background-color: #496A6F; border-top: 2px solid #000; color: #F5EEDF;">
                 <p>&copy; 2025 The Food Spot. All rights reserved.</p>
             </footer>
@@ -349,7 +356,7 @@
         <div id="order-menu-page" class="hidden flex-1 flex flex-col items-center justify-center p-4">
             <div class="container text-center p-8 max-w-lg mx-auto" style="background-color: #496A6F; border: 2px solid #000; box-shadow: 6px 6px 0px #000;">
                 <h1 class="text-4xl font-extrabold text-yellow-400 mb-4">Order Placed!</h1>
-                <p class="text-xl text-gray-300 mb-6" style="color: #F5EEDF;">Your order has been sent to procesing. Please choose a payment provider below.</p>
+                <p class="text-xl text-gray-300 mb-6" style="color: #F5EEDF;">Your order has been sent for processing. Please take your transaction number below and use one of the permanent payment buttons on the main page to pay.</p>
                 <div id="transaction-info-container" class="p-4 rounded-xl shadow-lg mb-6 flex flex-col items-center text-center" style="background-color: #F5EEDF; border: 2px solid #000; box-shadow: 4px 4px 0px #000; color: #1A1E26;">
                     <h3 class="text-xl font-bold text-black mb-2">Transaction Number:</h3>
                     <div class="flex items-center gap-4">
@@ -358,15 +365,6 @@
                             <i class="fas fa-copy"></i>
                         </button>
                     </div>
-                </div>
-                <div id="payment-providers-container" class="grid grid-cols-1 gap-4 mb-6">
-                    </div>
-                <div id="payment-link-container" class="text-center mt-6 hidden">
-                    <p class="text-gray-400 mb-2" style="color: #F5EEDF;">"Pay outside the app", or "Use the button below to pay for your order":</p>
-                    <a id="payment-link" href="#" target="_blank" class="payment-link flex items-center justify-center gap-2">
-                        <i class="fas fa-external-link-alt"></i>
-                        Go to Payment
-                    </a>
                 </div>
                 <button id="start-new-order-btn" class="mt-8 px-6 py-3 btn-green action-button">
                     Start a New Order
@@ -421,19 +419,11 @@
                                     <textarea id="item-description" placeholder="Description" rows="3" class="w-full p-2" required></textarea>
                                     
                                     <div class="space-y-2">
-                                        <label for="item-providers" class="block text-sm font-medium text-gray-400 mb-1" style="color: #1A1E26;">Select Payment Providers</label>
-                                        <div id="item-providers-container" class="provider-checkbox-container">
-                                        </div>
+                                        <label for="item-image-url" class="block text-xs font-medium text-gray-400 mb-1" style="color: #1A1E26;">Enter an image URL:</label>
+                                        <input type="url" id="item-image-url" placeholder="e.g., https://placehold.co/..." class="w-full p-2">
                                     </div>
-
-                                    <div class="space-y-2">
-                                        <div>
-                                            <label for="item-image-url" class="block text-xs font-medium text-gray-400 mb-1" style="color: #1A1E26;">Enter an image URL:</label>
-                                            <input type="url" id="item-image-url" placeholder="e.g., https://placehold.co/..." class="w-full p-2">
-                                        </div>
-                                        <div id="image-preview" class="mt-4 hidden">
-                                            <img src="" class="max-w-full h-auto shadow-md mx-auto" alt="Image Preview" style="border: 2px solid #000; box-shadow: 2px 2px 0px #000;" >
-                                        </div>
+                                    <div id="image-preview" class="mt-4 hidden">
+                                        <img src="" class="max-w-full h-auto shadow-md mx-auto" alt="Image Preview" style="border: 2px solid #000; box-shadow: 2px 2px 0px #000;" >
                                     </div>
                                     
                                     <div class="flex gap-2">
@@ -576,7 +566,6 @@
             const emptyCartMessage = document.getElementById('empty-cart-message');
             const completeOrderBtn = document.getElementById('complete-order-btn');
             const startNewOrderBtn = document.getElementById('start-new-order-btn');
-            const paymentProvidersContainer = document.getElementById('payment-providers-container');
 
             const adminPinInput = document.getElementById('admin-pin-input');
             const adminLoginSubmitBtn = document.getElementById('admin-login-submit-btn');
@@ -596,13 +585,12 @@
             const confirmNoBtn = document.getElementById('confirmNoBtn');
             const closeConfirmModal = confirmationModal.querySelector('.close-button');
             
-            // New: PIN management elements
+            // PIN management elements
             const currentPinInput = document.getElementById('current-pin-input');
             const newPinInput = document.getElementById('new-pin-input');
             const confirmNewPinInput = document.getElementById('confirm-new-pin-input');
             const updatePinBtn = document.getElementById('update-pin-btn');
             const pinMessage = document.getElementById('pin-message');
-
 
             // Admin: Menu Management
             const itemFormTitle = document.getElementById('item-form-title');
@@ -611,7 +599,7 @@
             const itemPriceInput = document.getElementById('item-price');
             const itemDescriptionInput = document.getElementById('item-description');
             const itemImageUrlInput = document.getElementById('item-image-url');
-            const itemProvidersCheckboxContainer = document.getElementById('item-providers-container'); // Changed to container
+            const itemProvidersCheckboxContainer = document.getElementById('item-providers-container');
             const imagePreview = document.getElementById('image-preview');
             const saveItemBtn = document.getElementById('save-item-btn');
             const cancelEditBtn = document.getElementById('cancel-edit-btn');
@@ -641,11 +629,14 @@
             const providersList = document.getElementById('providers-list');
             const providerFormMessage = document.getElementById('provider-form-message');
             const noProvidersMessage = document.getElementById('no-providers-message');
+            
+            // Permanent Payment Buttons on Customer Page
+            const permanentProvidersList = document.getElementById('permanent-providers-list');
 
-            // New: MetaMask button
+            // MetaMask button
             const connectMetamaskBtn = document.getElementById('connect-metamask-btn');
             
-            // New: Transaction number elements
+            // Transaction number elements
             const transactionNumberSpan = document.getElementById('transaction-number');
             const copyTransactionBtn = document.getElementById('copy-transaction-btn');
 
@@ -694,13 +685,39 @@
                 const storedProviders = JSON.parse(localStorage.getItem('paymentProviders')) || [];
                 providers = storedProviders;
                 renderAdminProviders();
-                renderProviderCheckboxes();
+                renderPermanentProviders(); // New: Renders permanent buttons
             }
 
             function saveProviders() {
                 localStorage.setItem('paymentProviders', JSON.stringify(providers));
                 renderAdminProviders();
-                renderProviderCheckboxes();
+                renderPermanentProviders(); // New: Renders permanent buttons
+            }
+            
+            function renderPermanentProviders() {
+                permanentProvidersList.innerHTML = '';
+                if (providers.length === 0) {
+                    permanentProvidersList.innerHTML = '<p class="text-gray-400 text-center col-span-full">No permanent payment options available. Please check back later.</p>';
+                    return;
+                }
+                
+                providers.forEach(provider => {
+                    const providerBtn = document.createElement('button');
+                    providerBtn.classList.add('w-full', 'py-3', 'btn-blue', 'action-button');
+                    providerBtn.dataset.link = provider.link;
+                    providerBtn.innerHTML = `${provider.name} <i class="fas fa-copy ml-2"></i>`;
+                    providerBtn.addEventListener('click', async (event) => {
+                        const link = event.target.closest('button').dataset.link;
+                        try {
+                            await navigator.clipboard.writeText(link);
+                            alert(`${provider.name} payment link copied to clipboard!`);
+                        } catch (err) {
+                            console.error('Failed to copy text: ', err);
+                            alert("Failed to copy link. Please try again.");
+                        }
+                    });
+                    permanentProvidersList.appendChild(providerBtn);
+                });
             }
 
             function renderMenuItems() {
@@ -819,15 +836,12 @@
                 const card = document.createElement('div');
                 card.classList.add('admin-order-card');
                 
-                const providerInfo = order.paymentProviders ? `<p class="text-xs text-gray-400" style="color: #496A6F;">Payment via: ${order.paymentProviders.map(p => p.name).join(', ')}</p>` : '';
-                
                 card.innerHTML = `
                     <div class="flex justify-between items-center mb-2">
                         <h4 class="text-lg font-bold text-gray-100" style="color: #1A1E26;">Order #${order.orderId}</h4>
                         <span class="text-sm text-gray-400" style="color: #496A6F;">${new Date(order.timestamp).toLocaleTimeString()}</span>
                     </div>
                     <p class="text-sm font-semibold text-yellow-400 mb-1" style="color: #84A28B;">Total: $${order.total.toFixed(2)}</p>
-                    ${providerInfo}
                     <ul class="order-items-list">
                         ${order.items.map(item => `<li>${item.name} (x${item.quantity}) - $${(item.price * item.quantity).toFixed(2)}</li>`).join('')}
                     </ul>
@@ -856,22 +870,6 @@
                 }
             }
             
-            function renderProviderCheckboxes() {
-                itemProvidersCheckboxContainer.innerHTML = '';
-                if (providers.length === 0) {
-                    itemProvidersCheckboxContainer.innerHTML = '<p class="text-gray-400 text-sm">No providers available</p>';
-                    return;
-                }
-                providers.forEach(provider => {
-                    const label = document.createElement('label');
-                    label.innerHTML = `
-                        <input type="checkbox" name="provider" value="${provider.id}" data-name="${provider.name}">
-                        ${provider.name}
-                    `;
-                    itemProvidersCheckboxContainer.appendChild(label);
-                });
-            }
-
             function renderAdminMenuItems() {
                 adminMenuList.innerHTML = '';
                 productLinkGenerationContainer.innerHTML = '';
@@ -901,18 +899,14 @@
                     `;
                     adminMenuList.appendChild(listItem);
                     
-                    const paymentInfo = {
-                        "cashAppTag": "$YourCashAppTag",
-                        "metamaskTag": "0xYourMetamaskAddress",
-                        "cellInfo": "YourCellNumber"
-                    };
-
-                    const completeData = {
-                        ...item,
-                        ...paymentInfo
-                    };
-                    
-                    const productData = JSON.stringify(completeData);
+                    // Product link generation part - MODIFIED to only include product/price
+                    const productData = JSON.stringify({
+                        id: item.id,
+                        name: item.name,
+                        price: item.price,
+                        description: item.description,
+                        imageUrl: item.imageUrl
+                    });
                     const encodedData = btoa(productData); // Base64 encoding
                     const productLink = `${window.location.origin}${window.location.pathname}?product=${encodedData}`;
                     
@@ -961,7 +955,6 @@
                 itemPriceInput.value = '';
                 itemDescriptionInput.value = '';
                 itemImageUrlInput.value = '';
-                document.querySelectorAll('#item-providers-container input[type="checkbox"]').forEach(cb => cb.checked = false);
                 imagePreview.classList.add('hidden');
                 imagePreview.querySelector('img').src = '';
                 itemFormTitle.textContent = 'Add New Menu Item';
@@ -978,10 +971,6 @@
                     itemPriceInput.value = item.price;
                     itemDescriptionInput.value = item.description;
                     itemImageUrlInput.value = item.imageUrl;
-                    
-                    document.querySelectorAll('#item-providers-container input[type="checkbox"]').forEach(cb => {
-                        cb.checked = item.providers.includes(cb.value);
-                    });
                     
                     itemFormTitle.textContent = `Editing: ${item.name}`;
                     saveItemBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Update Item';
@@ -1010,7 +999,6 @@
                 const price = parseFloat(itemPriceInput.value);
                 const description = itemDescriptionInput.value.trim();
                 let imageUrl = itemImageUrlInput.value.trim();
-                const selectedProviders = Array.from(document.querySelectorAll('#item-providers-container input[type="checkbox"]:checked')).map(cb => cb.value);
 
                 if (!name || isNaN(price) || !description) {
                     itemFormMessage.textContent = "Please fill in all required fields.";
@@ -1018,12 +1006,6 @@
                     return;
                 }
                 
-                if (selectedProviders.length === 0) {
-                    itemFormMessage.textContent = "Please select at least one payment provider.";
-                    itemFormMessage.classList.remove('hidden');
-                    return;
-                }
-
                 if (!imageUrl) {
                     imageUrl = 'https://placehold.co/400x200/F5EEDF/1A1E26?text=No+Image';
                 }
@@ -1032,9 +1014,9 @@
                 const existingItemIndex = menuItems.findIndex(item => item.id === id);
                 
                 if (existingItemIndex > -1) {
-                    menuItems[existingItemIndex] = { id, name, price, description, imageUrl, providers: selectedProviders };
+                    menuItems[existingItemIndex] = { id, name, price, description, imageUrl };
                 } else {
-                    menuItems.push({ id, name, price, description, imageUrl, providers: selectedProviders });
+                    menuItems.push({ id, name, price, description, imageUrl });
                 }
                 saveMenuItems();
                 resetItemForm();
@@ -1042,7 +1024,7 @@
 
             cancelEditBtn.addEventListener('click', resetItemForm);
             
-            // New: Payment Providers Logic
+            // Payment Providers Logic
             function renderAdminProviders() {
                 providersList.innerHTML = '';
                 if (providers.length === 0) {
@@ -1070,32 +1052,6 @@
                         const providerId = event.target.closest('button').dataset.id;
                         deleteProvider(providerId);
                     });
-                });
-            }
-
-            function renderOrderPaymentProviders(orderProviders) {
-                paymentProvidersContainer.innerHTML = '';
-                if (orderProviders.length === 0) {
-                    paymentProvidersContainer.innerHTML = '<p class="text-gray-400 text-center">No payment providers available for this order.</p>';
-                    return;
-                }
-                
-                orderProviders.forEach(provider => {
-                    const providerBtn = document.createElement('button');
-                    providerBtn.textContent = provider.name;
-                    providerBtn.classList.add('payment-link', 'py-3', 'px-6', 'action-button', 'btn-blue');
-                    providerBtn.dataset.link = provider.link;
-                    providerBtn.addEventListener('click', async (event) => {
-                        const link = event.target.dataset.link;
-                        try {
-                            await navigator.clipboard.writeText(link);
-                            alert("Payment link copied to clipboard!");
-                        } catch (err) {
-                            console.error('Failed to copy text: ', err);
-                            alert("Failed to copy link. Please try again.");
-                        }
-                    });
-                    paymentProvidersContainer.appendChild(providerBtn);
                 });
             }
 
@@ -1131,8 +1087,6 @@
             // Event Listeners
             showKioskBtn.addEventListener('click', () => {
                 showPage('food-kiosk-page');
-                menuItems = [];
-                renderMenuItems();
             });
             
             showAdminBtn.addEventListener('click', () => {
@@ -1168,22 +1122,12 @@
                     const total = currentOrder.reduce((sum, item) => sum + item.price * item.quantity, 0);
                     const orderId = Date.now();
                     
-                    const uniqueProviderIds = new Set();
-                    currentOrder.forEach(item => {
-                        if (item.providers) {
-                            item.providers.forEach(providerId => uniqueProviderIds.add(providerId));
-                        }
-                    });
-                    
-                    const orderProviders = providers.filter(provider => uniqueProviderIds.has(provider.id));
-
-                    orders.push({ orderId, items: currentOrder, total, status: 'pending', timestamp: new Date(), paymentProviders: orderProviders });
+                    orders.push({ orderId, items: currentOrder, total, status: 'pending', timestamp: new Date() });
                     saveOrders();
                     
                     currentOrder = [];
                     updateOrderList();
                     showPage('order-menu-page');
-                    renderOrderPaymentProviders(orderProviders);
                     transactionNumberSpan.textContent = orderId;
                 }
             });
@@ -1254,8 +1198,16 @@
                         const decodedData = atob(encodedData);
                         const product = JSON.parse(decodedData);
                         
-                        menuItems.push(product);
-                        renderMenuItems();
+                        // Add the product to the main menu items list
+                        const existingProductIndex = menuItems.findIndex(item => item.id === product.id);
+                        if (existingProductIndex === -1) {
+                            menuItems.push(product);
+                            saveMenuItems();
+                        } else {
+                            // Update existing product if ID matches
+                            menuItems[existingProductIndex] = product;
+                            saveMenuItems();
+                        }
                         
                         alert("Product loaded successfully!");
                         productLinkInput.value = '';
@@ -1278,8 +1230,17 @@
                     try {
                         const decodedData = atob(encodedData);
                         const product = JSON.parse(decodedData);
-                        menuItems.push(product);
-                        renderMenuItems();
+                        
+                        // Add the product to the main menu items list
+                        const existingProductIndex = menuItems.findIndex(item => item.id === product.id);
+                        if (existingProductIndex === -1) {
+                            menuItems.push(product);
+                            saveMenuItems();
+                        } else {
+                            // Update existing product if ID matches
+                            menuItems[existingProductIndex] = product;
+                            saveMenuItems();
+                        }
                         showPage('food-kiosk-page');
                     } catch (e) {
                         console.error("Failed to decode product data from URL:", e);
@@ -1328,8 +1289,7 @@
                 }
                 const completedOrdersText = completedOrders.map(order => {
                     const items = order.items.map(item => `  - ${item.name} (x${item.quantity})`).join('\n');
-                    const providersInfo = order.paymentProviders.map(p => p.name).join(', ') || 'N/A';
-                    return `Order #${order.orderId} - Total: $${order.total.toFixed(2)}\nPayment via: ${providersInfo}\nItems:\n${items}\nTimestamp: ${new Date(order.timestamp).toLocaleString()}\n`;
+                    return `Order #${order.orderId} - Total: $${order.total.toFixed(2)}\nItems:\n${items}\nTimestamp: ${new Date(order.timestamp).toLocaleString()}\n`;
                 }).join('\n' + '-'.repeat(30) + '\n');
                 
                 try {
